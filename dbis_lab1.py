@@ -90,7 +90,7 @@ for data_file in data_files:
                                 row[b] = row[b].replace(",", ".")
                             if i == "null":
                                 row[b] = None
-                        insert = sql.SQL('INSERT INTO ZNO_DATA_TEST ({}) VALUES ({})').format(
+                        insert = sql.SQL('INSERT INTO ZNO_DATA ({}) VALUES ({})').format(
                             sql.SQL(',').join([sql.Identifier(i.lower()) for i in head]),
                             sql.SQL(',').join(map(sql.Literal, row))
                         )
