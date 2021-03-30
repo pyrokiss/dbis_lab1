@@ -15,6 +15,7 @@ pattern_mark = re.compile(r'^\d+,\d+$')  # шаблон для поиска чи
 pattern_file = re.compile(r'\d{4}')  # шаблон для поиска года в названии файла
 
 data_files = ['Odata2020File.csv', 'Odata2019File.csv']   # название файла с данными
+data_files_test = ["Test2020.csv", "Test2019.csv"]
 counter_file = 'string_number.txt' # название файл с счетчиком
 
 
@@ -54,7 +55,7 @@ def create_table(connection):
     with open("create_table.sql", 'r') as create:
         res = ''.join([row for row in create])
         with connection.cursor() as cur:
-            execute_query(res, cur)
+            execute_query(res, cur, connection)
         connection.commit()
 
 def database_task(connection):
@@ -73,7 +74,9 @@ if conn is None:
 
 cursor = conn.cursor()
 create_table(conn)
-for data_file in data_files:
+start_time = time.time()
+for data_file in data_files_test:
+    print(data_file)
     with open(data_file, newline='', encoding="cp1251") as csvfile:
         reader = csv.reader(csvfile, delimiter=';')
         head = next(reader)
@@ -95,13 +98,14 @@ for data_file in data_files:
                             sql.SQL(',').join(map(sql.Literal, row))
                         )
                         cursor.execute(insert)
-                        if (n+1) % 100 == 0 and n > 0:
+                        if (n+1) % 1000 == 0 and n > 0:
+                            print(n+1)
                             conn.commit()
                             with open(counter_file, "w") as f:
                                f.write(str(n+1))
 
-                        print(n)
-                        time.sleep(0.15)
+                        #print(n)
+                        # time.sleep(0.15)
                 except (psycopg2.ProgrammingError, psycopg2.IntegrityError, psycopg2.DataError) as e:
                     conn.rollback()
                     if conn is not None:
@@ -111,6 +115,12 @@ for data_file in data_files:
                 except (psycopg2.OperationalError, psycopg2.DatabaseError, psycopg2.InterfaceError) as e:
                     print(f"Connections errors = {e}")
                     sys.exit()
+            conn.commit()
+    with open(counter_file, "w") as f:
+        f.write(str(0))
+with open("InsertTimeFile.txt", "w") as time_file:
+    time_file.write("Время: {}".format(str(time.time() - start_time)))
+    print("Время: ", (time.time() - start_time))
 os.remove(counter_file)
 database_task(conn)
 conn.close()
